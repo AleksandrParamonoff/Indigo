@@ -104,11 +104,9 @@ CEXPORT int indigoLayout(int object)
             bool no_layout = rxn.intermediateCount() || rxn.specialConditionsCount() || rxn.meta().getNonChemicalMetaCount();
             if (!no_layout)
             {
-                ReactionLayout rl(rxn, self.smart_layout);
+                ReactionLayout rl(rxn, self.smart_layout, self.layout_options);
                 rl.max_iterations = self.layout_max_iterations;
                 rl.layout_orientation = (layout_orientation_value)self.layout_orientation;
-                rl.bond_length = MoleculeLayout::DEFAULT_BOND_LENGTH;
-                rl.horizontal_interval_factor = self.layout_horintervalfactor;
                 if (self.layout_preserve_existing)
                     rl.preserve_molecule_layout = true;
                 rl.make();

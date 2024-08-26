@@ -40,7 +40,8 @@ namespace indigo
         {
             LAYOUT_MAX_ITERATION = 20
         };
-        static constexpr float DEFAULT_BOND_LENGTH = 1.6f;
+
+        static constexpr float DEFAULT_BOND_LENGTH = 1.0f;
 
         explicit MoleculeLayout(BaseMolecule& molecule, bool smart_layout = false);
 
