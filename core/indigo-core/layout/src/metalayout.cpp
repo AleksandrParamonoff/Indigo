@@ -39,7 +39,7 @@ void Metalayout::LayoutLine::clear()
 
 IMPL_ERROR(Metalayout, "metalayout");
 
-Metalayout::Metalayout() : horizontalIntervalFactor(0.5f), verticalIntervalFactor(0.8f), bondLength(1.0f), _avel(1.0f), _scaleFactor(1.0f)
+Metalayout::Metalayout() : reactionComponentMarginSize(0.5f), verticalIntervalFactor(0.8f), bondLength(1.0f), _avel(1.0f), _scaleFactor(1.0f)
 {
     clear();
 }
@@ -100,7 +100,7 @@ void Metalayout::process()
             case LayoutItem::ItemVerticalAlign::ECenter:
                 break;
             case LayoutItem::ItemVerticalAlign::ETop:
-                offset.y += (bondLength + line.top_height) / 2;
+                offset.y += reactionComponentMarginSize + line.top_height / 2;
                 break;
             case LayoutItem::ItemVerticalAlign::EBottom:
                 offset.y -= (bondLength + line.bottom_height) / 2;
@@ -138,7 +138,7 @@ void Metalayout::calcContentSize()
                 break;
             }
         }
-        line.width += horizontalIntervalFactor * bondLength * (line.items.size() - 1);
+        line.width += reactionComponentMarginSize * bondLength * (line.items.size() - 1);
         _contentSize.x = std::max(_contentSize.x, line.width);
         _contentSize.y += line.height;
         if (regularWidth < line.width)
@@ -147,19 +147,21 @@ void Metalayout::calcContentSize()
     _contentSize.y += verticalIntervalFactor * bondLength * (_layout.size() - 1);
 }
 
-void Metalayout::scaleSz()
+void Metalayout::scaleMoleculesSize()
 {
     for (int i = 0; i < _layout.size(); ++i)
+    {
         for (int j = 0; j < _layout[i].items.size(); ++j)
         {
             LayoutItem& item = _layout[i].items[j];
-            if (item.fragment)
+            if (item.isMoleculeFragment)
             {
                 item.scaledSize.diff(item.max, item.min);
                 item.scaledSize.scale(_scaleFactor);
                 item.scaledSize.max(item.minScaledSize);
             }
         }
+    }
 }
 
 float Metalayout::_getAverageBondLength()
@@ -173,7 +175,7 @@ float Metalayout::_getAverageBondLength()
         for (int j = 0; j < line.items.size(); ++j)
         {
             LayoutItem& item = line.items[j];
-            if (item.fragment)
+            if (item.isMoleculeFragment)
             {
                 BaseMolecule& mol = cb_getMol(item.id, context);
                 totalBondCount += mol.edgeCount();
@@ -195,7 +197,7 @@ float Metalayout::_getAverageBondLength()
         for (int j = 0; j < line.items.size(); ++j)
         {
             LayoutItem& item = line.items[j];
-            if (item.fragment)
+            if (item.isMoleculeFragment)
             {
                 BaseMolecule& mol = cb_getMol(item.id, context);
                 int atomCnt = mol.vertexCount();
@@ -280,10 +282,8 @@ float Metalayout::getTotalMoleculeClosestDist(BaseMolecule& mol)
     return sum;
 }
 
-void Metalayout::adjustMol(BaseMolecule& mol, const Vec2f& min, const Vec2f& pos)
+void Metalayout::adjustMol(BaseMolecule& mol, const Vec2f& min, const Vec2f& pos) const
 {
-    float scaleFactor = getScaleFactor();
-
     // Compute center points for the data sgroups
     QS_DEF(Array<Vec2f>, data_centers);
     data_centers.resize(mol.sgroups.getSGroupCount());
@@ -303,7 +303,7 @@ void Metalayout::adjustMol(BaseMolecule& mol, const Vec2f& min, const Vec2f& pos
         Vec2f v;
         Vec2f::projectZ(v, mol.getAtomXyz(i));
         v.sub(min);
-        v.scale(scaleFactor);
+        v.scale(_scaleFactor);
         v.add(pos);
         mol.setAtomXyz(i, v.x, v.y, 0);
     }
